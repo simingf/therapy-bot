@@ -17,14 +17,26 @@ chat_history = [
 ]
 
 summary_prompt = [
-    SystemMessage(content="You are a summarizer. You should summarize the conversation so far."),
+    SystemMessage(content="You are a summarizer. You should summarize the given human-therapist conversation. Only return the summary."),
 ]
 
 summary_update_prompt = [
-    SystemMessage(content="You are a summarizer. You should produce a new summary given a previous summary and a new message human-therapist exchange."),
+    SystemMessage(content="You are a summarizer. You should produce a new summary given a previous summary and a new human-therapist conversation. Only return the new summary."),
 ]
 
 summary = ""
+
+def get_chat_history() -> str:
+    global chat_history
+    res = ""
+    for obj in chat_history:
+        if type(obj) == SystemMessage:
+            res += "System:\n" + obj.content + "\n\n"
+        elif type(obj) == HumanMessage:
+            res += "Human: " + obj.content + "\n\n"
+        elif type(obj) == AIMessage:
+            res += "Therapist:\n" + obj.content + "\n\n"
+    return res
 
 def chat_with_therapist(input_message: str) -> str:
     global sys_message_base
@@ -40,25 +52,25 @@ def chat_with_therapist(input_message: str) -> str:
             summary_prompt.append(HumanMessage(content=full_content))
             aimessage = chat(summary_prompt)
             summary = aimessage.content
-            new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
+            new_sys_message = sys_message_base + "\nContext:\n" + summary
             chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
         else:
-            full_content = "Old Summary: " + summary + "\nNew conversation:\nHuman: " + human_content + "\nTherapist: " + ai_content
+            full_content = "Previous Summary: " + summary + "\nNew human-therapist conversation:\nHuman: " + human_content + "\nTherapist: " + ai_content
             summary_update_prompt.append(HumanMessage(content=full_content))
             aimessage = chat(summary_update_prompt)
             summary = aimessage.content
-            new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
+            new_sys_message = sys_message_base + "\nContext:\n" + summary
             chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
     assert(type(input_message) == str)
     new_message = HumanMessage(content=input_message)
     chat_history.append(new_message)
-    ai_message = chat(chat_history) # makes it print to stdout
+    ai_message = chat(chat_history)
     assert(type(ai_message) == AIMessage)
     chat_history.append(ai_message)
     content = ai_message.content
     ai_thoughts = content.split("Message: ")[0]
     user_message = content.split("Message: ")[1]
-    logger.info(f"CHAT HISTORY\n{chat_history}\n--------------------------------------\n")
+    logger.info(f"CHAT HISTORY\n{get_chat_history()}\n--------------------------------------\n")
     logger.info(f"AI THOUGHTS\n{ai_thoughts}\n--------------------------------------\n")
     return user_message
 
