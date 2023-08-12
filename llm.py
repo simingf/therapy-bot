@@ -21,7 +21,7 @@ summary_prompt = [
 ]
 
 summary_update_prompt = [
-    SystemMessage(content="You are a summarizer. You should produce a new summary given a previous summary and a new human and AI message exchange."),
+    SystemMessage(content="You are a summarizer. You should produce a new summary given a previous summary and a new message human-therapist exchange."),
 ]
 
 summary = ""
@@ -32,21 +32,23 @@ def chat_with_therapist(input_message: str) -> str:
     global summary_prompt
     global summary_update_prompt
     global summary
-    # if len(chat_history) == 5:
-    #     human_content = chat_history[1].content
-    #     ai_content = chat_history[2].content
-    #     if summary == "":
-    #         content = "Human: " + human_content + "\nAI: " + ai_content
-    #         aimessage = chat(summary_prompt.append(HumanMessage(content=content)))
-    #         summary = aimessage.content
-    #         new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
-    #         chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
-    #     else:
-    #         content = "Old Summary: " + summary + "\nNew conversation:\nHuman: " + human_content + "\nAI: " + ai_content
-    #         aimessage = chat(summary_prompt.append(HumanMessage(content=content)))
-    #         summary = aimessage.content
-    #         new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
-    #         chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
+    if len(chat_history) == 5:
+        human_content = chat_history[1].content
+        ai_content = chat_history[2].content
+        if summary == "":
+            full_content = "Human: " + human_content + "\nTherapist: " + ai_content
+            summary_prompt.append(HumanMessage(content=full_content))
+            aimessage = chat(summary_prompt)
+            summary = aimessage.content
+            new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
+            chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
+        else:
+            full_content = "Old Summary: " + summary + "\nNew conversation:\nHuman: " + human_content + "\nTherapist: " + ai_content
+            summary_update_prompt.append(HumanMessage(content=full_content))
+            aimessage = chat(summary_update_prompt)
+            summary = aimessage.content
+            new_sys_message = sys_message_base + "\n Summary so far: \n" + summary
+            chat_history = [SystemMessage(content=new_sys_message)] + chat_history[3:]
     assert(type(input_message) == str)
     new_message = HumanMessage(content=input_message)
     chat_history.append(new_message)
