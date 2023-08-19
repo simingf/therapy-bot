@@ -1,11 +1,12 @@
 from llm import chat_with_therapist
 
 def main():
-    user_question = str(input("What would you like to say to your therapist?\nUser: "))
+    name = str(input("What is your name?\nUser: "))
+    user_question = str(input(f"What would you like to say to your therapist?\n{name}: "))
     while True:
-        response = chat_with_therapist(user_question)
+        response = chat_with_therapist(name, user_question)
         print(f"Therapist: {response}\n")
-        print("User: ", end="")
+        print(f"{name}: ", end="")
         user_question = str(input())
         if user_question == "exit":
             break
